@@ -1,11 +1,12 @@
 import pygame
 import sys
+import os
 
 # ---------------- CONFIGURAÇÕES ----------------
 WIDTH, HEIGHT = 1500, 600
 FPS = 60
-GROUND_Y = HEIGHT - 0
-SCALE = 2.7
+GROUND_Y = HEIGHT - 0   # Ajuste conforme necessário para alinhar o Batman com o chão visual
+SCALE = 3.0
 
 # Variáveis do cenário infinito
 bg_offset = 0
@@ -17,29 +18,29 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Batman Game: Gotham City (Rodando em Pygame-CE)")
 clock = pygame.time.Clock()
 
-# --- CARREGAMENTO DO CENÁRIO (agora com background.png) ---
+# --- CARREGAMENTO DO CENÁRIO (agora na pasta "cenarios") ---
 try:
-    background_img = pygame.image.load("background.png").convert_alpha()
-    # Não redimensionamos – vamos repetir a imagem
+    background_img = pygame.image.load(os.path.join("cenarios", "background.png")).convert_alpha()
 except FileNotFoundError:
-    # Fallback: tenta carregar cenario.png
     try:
-        background_img = pygame.image.load("cenario.png").convert_alpha()
+        background_img = pygame.image.load(os.path.join("cenarios", "cenario.png")).convert_alpha()
     except FileNotFoundError:
         background_img = pygame.Surface((WIDTH, HEIGHT))
         background_img.fill((40, 40, 60))
 
 # ---------------- IMAGENS DO PERSONAGEM ----------------
-def load_images(prefix, count):
+def load_images(folder, prefix, count):
     images = []
     for i in range(1, count + 1):
+        filename = os.path.join(folder, f"{prefix}_{i}.png")
         try:
-            img = pygame.image.load(f"{prefix}_{i}.png").convert_alpha()
+            img = pygame.image.load(filename).convert_alpha()
             width = int(img.get_width() * SCALE)
             height = int(img.get_height() * SCALE)
             img = pygame.transform.scale(img, (width, height))
             images.append(img)
         except FileNotFoundError:
+            print(f"Erro: {filename} não encontrado")
             img = pygame.Surface((50, 50))
             img.fill((255, 0, 0))
             images.append(img)
@@ -49,12 +50,12 @@ def load_images(prefix, count):
 class Batman:
     def __init__(self):
         self.animations = {
-            "idle": load_images("parado", 4),
-            "walk": load_images("andando", 6),
-            "punch": load_images("murro", 3),
-            "jump": load_images("pulo", 6),
-            "down": load_images("abaixado", 1),
-            "murro_abaixado": load_images("murroabaixado", 3)
+            "idle": load_images("Sprites/batman", "parado", 4),
+            "walk": load_images("Sprites/batman", "andando", 6),
+            "punch": load_images("Sprites/batman", "murro", 3),
+            "jump": load_images("Sprites/batman", "pulo", 6),
+            "down": load_images("Sprites/batman", "abaixado", 1),
+            "murro_abaixado": load_images("Sprites/batman", "murroabaixado", 3)
         }
 
         self.state = "idle"
@@ -108,7 +109,7 @@ class Batman:
             self.image = pygame.transform.flip(self.image, True, False)
 
     def update(self, keys):
-        global bg_offset   # <-- permite modificar a variável global
+        global bg_offset
 
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
@@ -128,11 +129,11 @@ class Batman:
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 self.facing_right = True
                 moving = True
-                bg_offset -= scroll_speed   # rola para a esquerda (fundo se move para trás)
+                bg_offset -= scroll_speed
             elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 self.facing_right = False
                 moving = True
-                bg_offset += scroll_speed   # rola para a direita
+                bg_offset += scroll_speed
 
         if not on_ground:
             self.set_state("jump")
@@ -174,7 +175,7 @@ while running:
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_p:
-                batman.punch_release()   # indentação corrigida
+                batman.punch_release()
 
     keys = pygame.key.get_pressed()
     batman.update(keys)
@@ -182,16 +183,13 @@ while running:
     # --- DESENHO ---
     screen.fill((0, 0, 0))
 
-    # --- DESENHA FUNDO INFINITO COM REPETIÇÃO ---
+    # Desenha fundo infinito com repetição
     bg_w = background_img.get_width()
     offset = bg_offset % bg_w
-    # Desenha cópias suficientes para cobrir a tela (e mais uma margem)
     for x in range(-bg_w, WIDTH + bg_w, bg_w):
         screen.blit(background_img, (x + offset, 0))
 
-    # Desenha o Batman
     batman.draw(screen)
-
     pygame.display.update()
 
 pygame.quit()
