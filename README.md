@@ -8,7 +8,7 @@ Um jogo simples de plataforma com o Batman, desenvolvido em Python com a bibliot
 
 ## 📸 Capturas de Tela
 
-*Em breve* – Adicione uma imagem da tela do jogo aqui.
+*Em breve* –
 
 ---
 
