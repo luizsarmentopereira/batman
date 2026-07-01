@@ -1,14 +1,19 @@
 # 🦇 Batman Game - Gotham City
 
-![Batman Game](https://img.shields.io/badge/Pygame-2.5.7-blue) ![Python](https://img.shields.io/badge/Python-3.14-green) ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
+![Versão](https://img.shields.io/badge/Versão-1.0.0-blue) ![Python](https://img.shields.io/badge/Python-3.14-green) ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
 
 Um jogo simples de plataforma com o Batman, desenvolvido em Python com a biblioteca Pygame. O herói de Gotham pode andar, pular, agachar e socar em um cenário com rolagem infinita.
 
 ---
 
-## 📸 Capturas de Tela
+## 🎮 Gameplay (v1.0.0)
 
-*Em breve* –
+| GIF | Descrição |
+|-----|-----------|
+| ![Captura 1](capturas_tela/captura_1.gif) | Batman em ação – andando, pulando ou socando |
+| ![Captura 2](capturas_tela/captura_2.gif) | Batman agachado ou em combate |
+
+> **Versão 1.0.0** – Versão inicial do jogo. Novas funcionalidades, personagens e cenários serão adicionados nas próximas versões.
 
 ---
 
