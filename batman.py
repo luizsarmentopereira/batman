@@ -1,12 +1,15 @@
-<<<<<<< HEAD
 import pygame
 import sys
 
 # ---------------- CONFIGURAÇÕES ----------------
-WIDTH, HEIGHT = 1000, 450
+WIDTH, HEIGHT = 1500, 600
 FPS = 60
-GROUND_Y = HEIGHT - 50
-SCALE = 2.0
+GROUND_Y = HEIGHT - 0
+SCALE = 2.7
+
+# Variáveis do cenário infinito
+bg_offset = 0
+scroll_speed = 5
 
 # ---------------- INICIALIZAÇÃO ----------------
 pygame.init()
@@ -14,19 +17,17 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Batman Game: Gotham City (Rodando em Pygame-CE)")
 clock = pygame.time.Clock()
 
-# --- CARREGAMENTO DO CENÁRIO ---
+# --- CARREGAMENTO DO CENÁRIO (agora com background.png) ---
 try:
-    background_img = pygame.image.load("cenario.png").convert_alpha()
-    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
+    background_img = pygame.image.load("background.png").convert_alpha()
+    # Não redimensionamos – vamos repetir a imagem
 except FileNotFoundError:
-    background_img = pygame.Surface((WIDTH, HEIGHT))
-    background_img.fill((40, 40, 60))
-
-# --- VARIÁVEIS DO CENÁRIO INFINITO ---
-bg_x1 = 0
-bg_x2 = WIDTH
-scroll_speed = 5
-
+    # Fallback: tenta carregar cenario.png
+    try:
+        background_img = pygame.image.load("cenario.png").convert_alpha()
+    except FileNotFoundError:
+        background_img = pygame.Surface((WIDTH, HEIGHT))
+        background_img.fill((40, 40, 60))
 
 # ---------------- IMAGENS DO PERSONAGEM ----------------
 def load_images(prefix, count):
@@ -43,7 +44,6 @@ def load_images(prefix, count):
             img.fill((255, 0, 0))
             images.append(img)
     return images
-
 
 # ---------------- CLASSE BATMAN ----------------
 class Batman:
@@ -108,7 +108,7 @@ class Batman:
             self.image = pygame.transform.flip(self.image, True, False)
 
     def update(self, keys):
-        global bg_x1, bg_x2
+        global bg_offset   # <-- permite modificar a variável global
 
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
@@ -128,24 +128,11 @@ class Batman:
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 self.facing_right = True
                 moving = True
-                bg_x1 -= scroll_speed
-                bg_x2 -= scroll_speed
+                bg_offset -= scroll_speed   # rola para a esquerda (fundo se move para trás)
             elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 self.facing_right = False
                 moving = True
-                bg_x1 += scroll_speed
-                bg_x2 += scroll_speed
-
-        # Reposicionamento do cenário infinito
-        if bg_x1 <= -WIDTH:
-            bg_x1 = WIDTH
-        if bg_x2 <= -WIDTH:
-            bg_x2 = WIDTH
-            
-        if bg_x1 >= WIDTH:
-            bg_x1 = -WIDTH
-        if bg_x2 >= WIDTH:
-            bg_x2 = -WIDTH
+                bg_offset += scroll_speed   # rola para a direita
 
         if not on_ground:
             self.set_state("jump")
@@ -164,7 +151,6 @@ class Batman:
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
-
 
 # ---------------- INSTÂNCIA ----------------
 batman = Batman()
@@ -188,18 +174,21 @@ while running:
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_p:
-                batman.punch_release()
+                batman.punch_release()   # indentação corrigida
 
     keys = pygame.key.get_pressed()
     batman.update(keys)
 
     # --- DESENHO ---
-    screen.fill((0, 0, 0)) 
-    
-    # Desenha o cenário infinito
-    screen.blit(background_img, (bg_x1, 0))
-    screen.blit(background_img, (bg_x2, 0))
-    
+    screen.fill((0, 0, 0))
+
+    # --- DESENHA FUNDO INFINITO COM REPETIÇÃO ---
+    bg_w = background_img.get_width()
+    offset = bg_offset % bg_w
+    # Desenha cópias suficientes para cobrir a tela (e mais uma margem)
+    for x in range(-bg_w, WIDTH + bg_w, bg_w):
+        screen.blit(background_img, (x + offset, 0))
+
     # Desenha o Batman
     batman.draw(screen)
 
@@ -207,149 +196,3 @@ while running:
 
 pygame.quit()
 sys.exit()
-=======
-import pygame
-import sys
-
-# ---------------- CONFIGURAÇÕES ----------------
-WIDTH, HEIGHT = 800, 600
-FPS = 60
-GROUND_Y = HEIGHT - 50
-SCALE = 1.5   # <<< AUMENTA O TAMANHO DO BONECO
-
-# ---------------- INICIALIZAÇÃO ----------------
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Batman Game")
-clock = pygame.time.Clock()
-
-# ---------------- FUNÇÃO PARA CARREGAR IMAGENS ----------------
-def load_images(prefix, count):
-    images = []
-    for i in range(1, count + 1):
-        img = pygame.image.load(f"{prefix}_{i}.png").convert_alpha()
-
-        width = int(img.get_width() * SCALE)
-        height = int(img.get_height() * SCALE)
-        img = pygame.transform.scale(img, (width, height))
-
-        images.append(img)
-    return images
-
-# ---------------- CLASSE BATMAN ----------------
-class Batman:
-    def __init__(self):
-        self.animations = {
-            "idle": load_images("parado", 4),
-            "walk": load_images("andando", 6),
-            "punch": load_images("murro", 3)
-        }
-
-        self.state = "idle"
-        self.frame_index = 0
-        self.anim_speed = 0.15
-
-        self.image = self.animations[self.state][0]
-        self.rect = self.image.get_rect()
-        self.rect.bottomleft = (100, GROUND_Y)
-
-        self.speed = 5
-        self.facing_right = True
-
-        self.hold_punch = False
-
-    def set_state(self, new_state):
-        if self.state != new_state:
-            self.state = new_state
-            self.frame_index = 0
-
-    def punch_start(self):
-        if self.state != "punch":
-            self.set_state("punch")
-
-    def punch_release(self):
-        self.hold_punch = False
-
-    def animate(self, loop=True):
-        # -------- CONGELAMENTO NO MURRO_2 --------
-        if self.state == "punch":
-            if self.hold_punch and int(self.frame_index) == 1:
-                self.image = self.animations["punch"][1]
-                if not self.facing_right:
-                    self.image = pygame.transform.flip(self.image, True, False)
-                return
-
-        self.frame_index += self.anim_speed
-
-        if self.frame_index >= len(self.animations[self.state]):
-            if loop:
-                self.frame_index = 0
-            else:
-                self.set_state("idle")
-                return
-
-        self.image = self.animations[self.state][int(self.frame_index)]
-
-        if not self.facing_right:
-            self.image = pygame.transform.flip(self.image, True, False)
-
-    def update(self, keys):
-        # -------- MURRO --------
-        if self.state == "punch":
-            self.animate(loop=False)
-            return
-
-        # -------- ANDAR DIREITA --------
-        if keys[pygame.K_RIGHT]:
-            self.facing_right = True
-            self.set_state("walk")
-            self.rect.x += self.speed
-            self.animate()
-            return
-
-        # -------- ANDAR ESQUERDA --------
-        if keys[pygame.K_LEFT]:
-            self.facing_right = False
-            self.set_state("walk")
-            self.rect.x -= self.speed
-            self.animate()
-            return
-
-        # -------- PARADO --------
-        self.set_state("idle")
-        self.animate()
-
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
-
-# ---------------- OBJETO ----------------
-batman = Batman()
-
-# ---------------- LOOP PRINCIPAL ----------------
-running = True
-while running:
-    clock.tick(FPS)
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_d:
-                batman.hold_punch = True
-                batman.punch_start()
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_d:
-                batman.punch_release()
-
-    keys = pygame.key.get_pressed()
-    batman.update(keys)
-
-    screen.fill((25, 25, 25))
-    batman.draw(screen)
-    pygame.display.update()
-
-pygame.quit()
-sys.exit()
->>>>>>> c25b336e92d2605e2f068570dad27de3b554942c
